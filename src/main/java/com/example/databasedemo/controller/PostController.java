@@ -2,69 +2,53 @@ package com.example.databasedemo.controller;
 
 
 import com.example.databasedemo.entity.Post;
-import com.example.databasedemo.exception.PostNotFoundException;
-import com.example.databasedemo.repository.PostRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import com.example.databasedemo.facade.PostFacade;
+import com.example.databasedemo.request.PostRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/posts")
 public class PostController {
 
-    @Autowired
-    private PostRepository postRepository;
+    private PostFacade postFacade;
 
-    @GetMapping("/posts")
-    public List<Post> getAllPosts()
-    {
-        return this.postRepository.findAll();
+    public PostController(PostFacade postFacade) {
+        this.postFacade = postFacade;
     }
 
-    @GetMapping("/posts/{id}")
+    @GetMapping("/")
+    @PreAuthorize("hasRole('USER')")
+    public List<Post> getAllPosts()
+    {
+        return this.postFacade.getAllPosts();
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public Post getPostById(
             @PathVariable(value = "id") Long postId
     ) {
-        return this.postRepository
-            .findById(postId)
-            .orElseThrow(() -> new PostNotFoundException("Post", "id", postId))
-        ;
-
+        return this.postFacade.getPostById(postId);
     }
 
-    @PostMapping("/posts")
+    @PostMapping("/")
+    @PreAuthorize("hasRole('USER')")
     public Post createPost(
-            @Valid @RequestBody Post post
-    ) {
-        return this.postRepository.save(post);
+            @Valid @RequestBody PostRequest postRequest
+            ) {
+        return this.postFacade.createPost(postRequest);
     }
 
-    @PutMapping("/posts/{id}")
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public Post updatePost(
             @PathVariable(value = "id") Long postId,
-            @Valid @RequestBody Post postData
+            @Valid @RequestBody PostRequest postRequest
     ) {
-        Post post = this.postRepository.findById(postId)
-                .orElseThrow(() -> new PostNotFoundException("Post", "id", postId));
-
-        post.setTitle(postData.getTitle());
-        post.setContent(postData.getTitle());
-
-        return postRepository.save(post);
-    }
-
-    @DeleteMapping("/posts/{id}")
-    public ResponseEntity<?> deletePost(
-        @PathVariable(value = "id") Long postId
-    ) {
-        Post post = this.postRepository.findById(postId)
-                .orElseThrow(() -> new PostNotFoundException("Post", "id", postId));
-
-        postRepository.delete(post);
-
-        return ResponseEntity.ok().build();
+        return this.postFacade.updatePost(postId, postRequest);
     }
 }

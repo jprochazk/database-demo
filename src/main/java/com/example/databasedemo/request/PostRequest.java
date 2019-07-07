@@ -1,18 +1,9 @@
-package com.example.databasedemo.entity;
+package com.example.databasedemo.request;
 
-import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
-import com.example.databasedemo.entity.audit.UserDateAudit;
-
-@Entity
-@Table(name = "posts")
-public class Post extends UserDateAudit {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class PostRequest {
 
     @NotBlank
     @Size(max = 200)
@@ -36,13 +27,5 @@ public class Post extends UserDateAudit {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 }

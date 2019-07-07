@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DatabaseDemo</title>
+</head>
+<style>
+input {
+	margin:5px;
+	margin-left:0;
+	width:300px;
+}
+textarea {
+	margin:5px;
+	margin-left:0;
+	resize: none;
+	width: 300px;
+	height: 200px;
+}
+
+.post {
+	padding: 5px;
+}
+
+#post-title {
+	font-size: 1.4em;
+}
+
+#post-content {
+	padding-left:5px;
+}
+</style>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+<script>
+	let baseUrl = "http://localhost:8080/api/";
+	let postPrototype = "<div class='post' id='__id__'><span id='post-title'>__title__</span><p id='post-content'>__content__</p></div>";
+    let postRequest = {
+    	"title": null,
+    	"content": null
+    }
+    let userLoginRequest = {
+    	"usernameOrEmail": null,
+    	"password": null
+    }
+    let userRegisterRequest = {
+    	"username": null,
+    	"email": null,
+    	"password": null
+    }
+    let accessToken = null;
+    let headers = {
+    	"Authorization": "Bearer "
+    }
+
+    function getAllPosts() {
+    	if(accessToken !== null) {
+    		let tempHeaders = headers;
+    		tempHeaders.Authorization += accessToken;
+
+    		let tempUrl = baseUrl+"posts/";
+
+    		$.ajax({
+    			"method": 'GET',
+    	    	"url": tempUrl,
+    	    	"headers": tempHeaders,
+
+    	    	error: function(xhr, textStatus, errorThrown) {
+    	    		console.log("xhr: ",xhr);
+    	    		console.log("textStatus: ",textStatus);
+    	    		console.log("errorThrown: ",errorThrown);
+    	    		console.log(xhr.responseText);
+    	    	},
+    	    	success: function(data, textStatus, xhr) {
+    	    		posts = data;
+    	    		posts.forEach(function(e) {
+    	    			let post = postPrototype;
+    	    			post = post.replace(/__id__/g, e.id);
+    	    			post = post.replace(/__title__/g, e.title);
+    	    			post = post.replace(/__content__/g, e.content);
+
+    	    			$('div#posts').append($.parseHTML(post));
+    	    		})
+    	    	}
+    		});
+    	}
+    }
+
+    function submitLogin() {
+    	if(accessToken === null) {
+    		let usernameOrEmail = $('input.login#username').val();
+    		let password = $('input.login#password').val();
+
+    		if(usernameOrEmail.length > 3 && password.length > 6) {
+    			let tempRequest = userLoginRequest;
+    			tempRequest.usernameOrEmail = usernameOrEmail;
+    			tempRequest.password = password;
+
+    			let tempUrl = baseUrl+"auth/signin";
+
+    			$.ajax({
+    			    "contentType": "application/json",
+    				"method": 'POST',
+    			    "url": tempUrl,
+    			    "data": JSON.stringify(tempRequest),
+
+    			    error: function(xhr, textStatus, errorThrown) {
+    			    	console.log("xhr: ",xhr);
+    			    	console.log("textStatus: ",textStatus);
+    			    	console.log("errorThrown: ",errorThrown);
+    			    	console.log(xhr.responseText);
+    			    },
+    			    success: function(data, textStatus, xhr) {
+    			    	accessToken = data.accessToken;
+    					$('div#login').hide();
+    					$('div#post-submit').show();
+    					$('div#posts').show();
+    					$('span#access-status').text('user');
+    					getAllPosts();
+    			    }
+    			});
+    		}
+    	} else {
+    		$('div#login').hide();
+    	}
+    }
+
+    function submitRegister() {
+    	let username  = $('input.register#username').val();
+    	let password = $('input.register#password').val();
+    }
+
+    function submitPost() {
+    	let title = $('input.post-submit#title').val();
+    	let content = $('textarea.post-submit#content').val();
+    }
+</script>
+<body>
+	Access: <span id="access-status">none</span>
+	<div style="padding:5px;" id="login">
+		<label>Username or E-Mail</label><br><input class="login" id="username"><br>
+		<label>Password</label><br><input class="login" id="password"><br>
+		<button class="login" type="button" id="login">Submit</button>
+	</div>
+	<div style="padding:5px;" id="register" hidden>
+		<label>Username</label><br><input class="register" id="username"><br>
+		<label>E-Mail</label><br><input class="register" id="email"><br>
+		<label>Password</label><br><input class="register" id="password"><br>
+		<button class="register" type="button" id="register">Submit</button>
+	</div>
+	<div style="padding:5px;" id="post-submit" hidden>
+		<label>Title</label><br><input class="post-submit" id="title"><br>
+		<label>Content</label><br><textarea class="post-submit" id="content"></textarea><br>
+		<button class="post-submit" type="button" id="post-submit">Submit</button>
+	</div>
+	<hr>
+	<div style="padding:5px;" id="posts" hidden>
+	</div>
+</body>
+<script>
+	$(document).ready(function() {
+    	$('button#login').click(submitLogin);
+    	$('button#register').click(submitRegister);
+    	$('button#post-submit').click(submitPost);
+	});
+</script>
+</html>
